@@ -1,9 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using System.Reflection;
 using System.Web.Http;
-using System.Web.Routing;
+using Autofac;
+using Autofac.Integration.Mvc;
+using Autofac.Integration.WebApi;
+using Human_Hand_Off_Bot.HumanHandOff;
+using Microsoft.Bot.Builder.Azure;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.Dialogs.Internals;
+using Microsoft.Bot.Connector;
 
 namespace Human_Hand_Off_Bot
 {
@@ -11,6 +15,31 @@ namespace Human_Hand_Off_Bot
     {
         protected void Application_Start()
         {
+            // Bot Storage: This is a great spot to register the private state storage for your bot. 
+            // We provide adapters for Azure Table, CosmosDb, SQL Azure, or you can implement your own!
+            // For samples and documentation, see: https://github.com/Microsoft/BotBuilder-Azure
+            Conversation.UpdateContainer(
+                builder =>
+                {
+                    builder.RegisterModule(new AzureModule(Assembly.GetExecutingAssembly()));
+
+                    // Using Azure Table Storage
+                    //var store = new TableBotDataStore(ConfigurationManager.AppSettings["AzureWebJobsStorage"]); // requires Microsoft.BotBuilder.Azure Nuget package 
+
+                    // To use CosmosDb or InMemory storage instead of the default table storage, uncomment the corresponding line below
+                    // var store = new DocumentDbBotDataStore("cosmos db uri", "cosmos db key"); // requires Microsoft.BotBuilder.Azure Nuget package 
+                    var store = new InMemoryDataStore(); // volatile in-memory store
+
+                    builder.Register(c => store)
+                        .Keyed<IBotDataStore<BotData>>(AzureModule.Key_DataStore)
+                        .AsSelf()
+                        .SingleInstance();
+
+                    builder.RegisterModule<HumanModule>();
+                    builder.RegisterControllers(typeof(WebApiApplication).Assembly);
+                    builder.RegisterApiControllers(typeof(WebApiApplication).Assembly);
+                });
+
             GlobalConfiguration.Configure(WebApiConfig.Register);
         }
     }
