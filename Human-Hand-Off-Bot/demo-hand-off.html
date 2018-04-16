@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Demo Human Hand Off Bot</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <link href="./botframework-webchat/botchat.css" rel="stylesheet" />
+</head>
+<body>
+    <h1>Demo Hand Off</h1>
+    <div class="row">
+        <div class="col-4 offset-1">
+            <div class="row">
+                <div class="col">
+                    <h2>
+                        <span>使用者</span>
+                    </h2>
+                    <p>請輸入 <span class="font-weight-bold font-italic">human</span> 與客服人員連線</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <iframe src="https://webchat.botframework.com/embed/Human-Hand-Off-Bot?s=YOUR_WEBCHAT_SECRET_GOES_HERE" style="width: 100%;height: 600px;"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="col-4  offset-1">
+            <div class="row">
+                <div class="col">
+                    <h2>
+                        <span>客服人員</span>
+                        <button type="button" class="btn btn-sm btn-primary" id="connect" onclick="connect()">註冊連線</button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="stopConversation()">停止對話</button>
+                    </h2>
+                    <p id="heading">未註冊連線...</p>
+                </div>
+            </div>
+            <div class="row" style="width: 100%;height: 600px; border: 2px inset">
+                <div class="col">
+                    <div id="BotChatGoesHere"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./botframework-webchat/botchat.js"></script>
+    <script>
+        // BotFramework-WebChat https://github.com/Microsoft/BotFramework-WebChat
+        var params = BotChat.queryParams(location.search);
+        var user = {
+            id: params['userid'] || 'userid',
+            name: params["username"] || 'username'
+        };
+        var bot = {
+            id: params['botid'] || 'botid',
+            name: params["botname"] || 'botname'
+        };
+
+        window['botchatDebug'] = params['debug'] && params['debug'] === "true";
+
+        var botConnection = new BotChat.DirectLine({
+            //secret: params['s'],
+            secret: 'YOUR_DIRECT_LINE_SECRET_GOES_HERE',
+            token: params['t'],
+            domain: params['domain'],
+            webSocket: params['webSocket'] && params['webSocket'] === "true" // defaults to true
+        });
+
+        BotChat.App({
+            botConnection: botConnection,
+            user: user,
+            bot: bot,
+            locale: params['locale'],
+            resize: 'detect'
+        }, document.getElementById("BotChatGoesHere"));
+
+        // Custom Event
+        var connected = false;
+        var connect = () => {
+            var name = !connected ? "connect" : "disconnect";
+            botConnection
+                .postActivity({ type: "event", value: "", from: user, name: name })
+                .subscribe(connectionSuccess);
+        };
+        var connectionSuccess = (id) => {
+            if (id === "retry") return;
+
+            console.log("success");
+            connected = !connected;
+            if (connected) {
+                document.getElementById("connect").innerHTML = "中斷連線";
+                document.getElementById("heading").innerHTML = "您現在已經完成註冊，並開放與使用者連線。";
+            }
+            else {
+                document.getElementById("connect").innerHTML = "註冊連線";
+                document.getElementById("heading").innerHTML = "您現在已經中斷連線，請重新註冊連線。";
+            }
+        };
+        var stopConversation = () => {
+            botConnection
+                .postActivity({ type: "event", value: "", from: user, name: "stopConversation" })
+                .subscribe(id => console.log("success"));
+        };
+    </script>
+</body>
+</html>

@@ -178,7 +178,12 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="botframework-webchat\botchat.css" />
+    <Content Include="botframework-webchat\botchat.js" />
+    <Content Include="botframework-webchat\botchat.js.map" />
+    <Content Include="README.md" />
     <Content Include="default.htm" />
+    <Content Include="demo-hand-off.html" />
     <Content Include="Global.asax" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
